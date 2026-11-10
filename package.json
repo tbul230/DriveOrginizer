@@ -1,0 +1,15 @@
+{
+  "name": "ai-drive-organizer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser-based AI Google Drive organizer (static site + optional serverless AI backend). No build step.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "test:e2e": "node tests/e2e/run-e2e.mjs",
+    "serve": "node tests/e2e/static-server.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

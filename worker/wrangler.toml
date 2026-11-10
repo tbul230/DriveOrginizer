@@ -1,0 +1,14 @@
+# Optional: only needed if you deploy with the Wrangler CLI from a developer machine.
+# You can also deploy by pasting worker.js into the Cloudflare dashboard (see docs/DEPLOYMENT.md).
+name = "drive-organizer-ai"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+[vars]
+# Replace with your values. Do NOT put ANTHROPIC_API_KEY here — set it as a secret:
+#   npx wrangler secret put ANTHROPIC_API_KEY
+GOOGLE_CLIENT_ID = "YOUR_CLIENT_ID.apps.googleusercontent.com"
+ALLOWED_ORIGINS = "https://YOUR_GITHUB_USERNAME.github.io"
+ALLOWED_EMAILS = ""
+MODEL = "claude-opus-5-5"
+EFFORT = "medium"

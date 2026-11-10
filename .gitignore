@@ -1,0 +1,5 @@
+node_modules/
+tests/e2e/screenshots/
+.wrangler/
+.dev.vars
+.DS_Store
