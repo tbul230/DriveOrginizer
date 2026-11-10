@@ -113,3 +113,17 @@ test('handles refusals, truncation, bad JSON, upstream errors and bad input', as
   assert.equal(anthropicCalls.length, before);
   assert.equal((await worker.fetch(planReq(), { ...env, ANTHROPIC_API_KEY: '' })).status, 500);
 });
+
+test('same-origin hosting (Vercel /api) is allowed without ALLOWED_ORIGINS', async () => {
+  const { GET } = await import('../api/health.js');
+  const own = 'https://drive-organizer.vercel.app';
+  const saved = { ...process.env };
+  Object.assign(process.env, { ...env, ALLOWED_ORIGINS: '' });
+  try {
+    const r = await GET(new Request(`${own}/api/health`, { headers: { Origin: own } }));
+    assert.equal(r.status, 200);
+    assert.equal(r.headers.get('Access-Control-Allow-Origin'), own);
+    const other = await GET(new Request(`${own}/api/health`, { headers: { Origin: 'https://evil.example' } }));
+    assert.equal(other.status, 403);
+  } finally { process.env = saved; }
+});

@@ -15,6 +15,7 @@
 //   ANTHROPIC_API_KEY   (secret)   your Anthropic API key
 //   GOOGLE_CLIENT_ID    (text)     the OAuth client ID used by the website
 //   ALLOWED_ORIGINS     (text)     comma-separated site origins, e.g. https://you.github.io
+//                                  (not needed when the site and backend share an origin, e.g. on Vercel)
 // Optional:
 //   ALLOWED_EMAILS      (text)     comma-separated Google accounts allowed to use the AI
 //   MODEL               (text)     default "claude-opus-5-5"
@@ -100,9 +101,15 @@ const PLAN_SCHEMA = {
 
 const list = (v) => String(v || '').split(',').map((s) => s.trim()).filter(Boolean);
 
+/** Allowed browser origins: ALLOWED_ORIGINS plus the backend's own origin (same-site hosting, e.g. Vercel). */
+function allowedOrigins(request, env) {
+  const own = (() => { try { return new URL(request.url).origin; } catch { return ''; } })();
+  return [...list(env.ALLOWED_ORIGINS), own].filter(Boolean);
+}
+
 function corsHeaders(request, env) {
   const origin = request.headers.get('Origin') || '';
-  const allowed = list(env.ALLOWED_ORIGINS);
+  const allowed = allowedOrigins(request, env);
   const h = {
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Authorization, Content-Type',
@@ -297,7 +304,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     const origin = request.headers.get('Origin');
-    if (origin && !list(env.ALLOWED_ORIGINS).includes(origin)) {
+    if (origin && !allowedOrigins(request, env).includes(origin)) {
       return new Response(JSON.stringify({ error: 'Origin not allowed. Add it to ALLOWED_ORIGINS.' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
     }
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders(request, env) });

@@ -40,6 +40,7 @@ const state = {
   organizerUi: {},     // organizer view state that survives navigation
   route: 'dashboard',
   busy: false,         // true while a run/undo is writing to Drive
+  sameOriginBackend: '', // set when this site also hosts the AI backend (e.g. Vercel /api)
 };
 
 let mainEl = null;
@@ -48,7 +49,7 @@ let leaveHandlers = [];
 export const ctx = {
   state,
   get clientId() { return (state.settings.googleClientId || config.googleClientId || '').trim(); },
-  get backendUrl() { return (state.settings.aiBackendUrl || config.aiBackendUrl || '').trim(); },
+  get backendUrl() { return (state.settings.aiBackendUrl || config.aiBackendUrl || state.sameOriginBackend || '').trim(); },
   saveSettings(patch) {
     Object.assign(state.settings, patch);
     saveSettings(state.settings);
@@ -258,6 +259,17 @@ async function boot() {
   window.addEventListener('beforeunload', (e) => { if (state.busy) { e.preventDefault(); e.returnValue = ''; } });
   window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => applyTheme(state.settings.theme));
   render();
+  detectSameOriginBackend();
+}
+
+/** When the site is deployed together with the AI backend (Vercel /api functions), use it automatically. */
+async function detectSameOriginBackend() {
+  if (config.aiBackendUrl || state.settings.aiBackendUrl || location.protocol !== 'https:') return;
+  try {
+    const res = await fetch(`${location.origin}/api/health`, { cache: 'no-store' });
+    const data = res.ok ? await res.json() : null;
+    if (data?.service === 'ai-drive-organizer' && data.configured) state.sameOriginBackend = location.origin;
+  } catch { /* no backend here (e.g. GitHub Pages) */ }
 }
 
 boot().catch((e) => {
